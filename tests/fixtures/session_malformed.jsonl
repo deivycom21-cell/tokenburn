@@ -1,0 +1,2 @@
+{"type":"user","message":{"role":"user","content":[{"type":"text","text":"Hello"}]},"uuid":"u1","sessionId":"sess_bad","cwd":"/project","version":"1.0.17","userType":"human","isSidechain":false,"parentUuid":null}
+{"type":"assistant","message":{"incomplete json
