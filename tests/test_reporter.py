@@ -199,3 +199,132 @@ class TestNotMentionedAnnotation:
         utils = next((f for f in data["files"] if "utils" in f["path"]), None)
         assert utils is not None
         assert utils["mentioned"] is False
+
+
+# ── Criterion 6 — Share mode with atypical paths ─────────────────────────────
+
+class TestShareModeAtypicalPaths:
+    """Verify --share only shows the filename regardless of the session path shape."""
+
+    # ── helpers ──────────────────────────────────────────────────────────────
+
+    @staticmethod
+    def _text(report, session_path: str) -> str:
+        return format_text(report, session_path=session_path, share=True)
+
+    @staticmethod
+    def _json(report, session_path: str) -> dict:
+        return json.loads(format_json(report, session_path=session_path, share=True))
+
+    # ── path with spaces in directory name ───────────────────────────────────
+
+    def test_text_spaces_in_dir_no_full_path(self, session_burn):
+        path = "/home/user/my project folder/sess.jsonl"
+        out = self._text(_report(session_burn), path)
+        assert "/home/user/my project folder" not in out
+
+    def test_text_spaces_in_dir_no_session_line(self, session_burn):
+        path = "/home/user/my project folder/sess.jsonl"
+        out = self._text(_report(session_burn), path)
+        assert "Session:" not in out
+
+    def test_json_spaces_in_dir_no_session_key(self, session_burn):
+        path = "/home/user/my project folder/sess.jsonl"
+        data = self._json(_report(session_burn), path)
+        assert "session" not in data
+
+    def test_json_spaces_in_dir_files_basename_only(self, session_burn):
+        path = "/home/user/my project folder/sess.jsonl"
+        data = self._json(_report(session_burn), path)
+        for f in data["files"]:
+            assert "/" not in f["path"], f"Full path leaked: {f['path']}"
+
+    # ── path with accented / Unicode characters ───────────────────────────────
+
+    def test_text_accented_dir_no_full_path(self, session_burn):
+        path = "/home/user/café résumé/sess.jsonl"
+        out = self._text(_report(session_burn), path)
+        assert "/home/user/café résumé" not in out
+
+    def test_text_accented_dir_no_session_line(self, session_burn):
+        path = "/home/user/café résumé/sess.jsonl"
+        out = self._text(_report(session_burn), path)
+        assert "Session:" not in out
+
+    def test_json_accented_dir_no_session_key(self, session_burn):
+        path = "/home/user/café résumé/sess.jsonl"
+        data = self._json(_report(session_burn), path)
+        assert "session" not in data
+
+    def test_json_accented_dir_files_basename_only(self, session_burn):
+        path = "/home/user/café résumé/sess.jsonl"
+        data = self._json(_report(session_burn), path)
+        for f in data["files"]:
+            assert "/" not in f["path"], f"Full path leaked: {f['path']}"
+
+    # ── path with special shell characters ───────────────────────────────────
+
+    def test_text_special_chars_dir_no_full_path(self, session_burn):
+        path = "/home/user/project(2024)!final/sess.jsonl"
+        out = self._text(_report(session_burn), path)
+        assert "/home/user/project(2024)!final" not in out
+
+    def test_text_special_chars_dir_no_session_line(self, session_burn):
+        path = "/home/user/project(2024)!final/sess.jsonl"
+        out = self._text(_report(session_burn), path)
+        assert "Session:" not in out
+
+    def test_json_special_chars_dir_no_session_key(self, session_burn):
+        path = "/home/user/project(2024)!final/sess.jsonl"
+        data = self._json(_report(session_burn), path)
+        assert "session" not in data
+
+    def test_json_special_chars_dir_files_basename_only(self, session_burn):
+        path = "/home/user/project(2024)!final/sess.jsonl"
+        data = self._json(_report(session_burn), path)
+        for f in data["files"]:
+            assert "/" not in f["path"], f"Full path leaked: {f['path']}"
+
+    # ── very long path (> 200 chars in directory component) ──────────────────
+
+    def test_text_very_long_path_no_full_path(self, session_burn):
+        long_dir = "d" * 200
+        path = f"/home/user/{long_dir}/sess.jsonl"
+        out = self._text(_report(session_burn), path)
+        assert f"/home/user/{long_dir}" not in out
+
+    def test_text_very_long_path_no_session_line(self, session_burn):
+        long_dir = "d" * 200
+        path = f"/home/user/{long_dir}/sess.jsonl"
+        out = self._text(_report(session_burn), path)
+        assert "Session:" not in out
+
+    def test_json_very_long_path_no_session_key(self, session_burn):
+        long_dir = "d" * 200
+        path = f"/home/user/{long_dir}/sess.jsonl"
+        data = self._json(_report(session_burn), path)
+        assert "session" not in data
+
+    def test_json_very_long_path_files_basename_only(self, session_burn):
+        long_dir = "d" * 200
+        path = f"/home/user/{long_dir}/sess.jsonl"
+        data = self._json(_report(session_burn), path)
+        for f in data["files"]:
+            assert "/" not in f["path"], f"Full path leaked: {f['path']}"
+
+    # ── filename itself contains spaces ──────────────────────────────────────
+
+    def test_text_filename_with_spaces_no_full_path(self, session_burn):
+        path = "/home/user/projects/my session 2024.jsonl"
+        out = self._text(_report(session_burn), path)
+        assert "/home/user/projects/" not in out
+
+    def test_text_filename_with_spaces_no_session_line(self, session_burn):
+        path = "/home/user/projects/my session 2024.jsonl"
+        out = self._text(_report(session_burn), path)
+        assert "Session:" not in out
+
+    def test_json_filename_with_spaces_no_session_key(self, session_burn):
+        path = "/home/user/projects/my session 2024.jsonl"
+        data = self._json(_report(session_burn), path)
+        assert "session" not in data
