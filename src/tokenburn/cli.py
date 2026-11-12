@@ -13,13 +13,12 @@ from .reporter import format_json, format_text
 _DISCLAIMER = "Not affiliated with, endorsed by, or sponsored by Anthropic. Claude® is a trademark of Anthropic."
 
 
-@click.group()
+@click.group(epilog=_DISCLAIMER)
 @click.version_option()
 def main() -> None:
     """TokenBurn — measure wasted tokens in Claude Code sessions.
 
     \b
-    Not affiliated with Anthropic. Claude® is a trademark of Anthropic.
     API-equivalent cost shown; subscription (Pro/Max) costs differ.
     """
 
