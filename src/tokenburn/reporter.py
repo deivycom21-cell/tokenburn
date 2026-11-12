@@ -9,7 +9,7 @@ _COST_WARNING = (
     "This is the API rate. If you use Claude Pro/Max, your actual\n"
     "   cost per session is covered by your subscription."
 )
-_FUNNEL = "Measure your burn → tokenburn.sh"
+_FUNNEL = "Measure your burn → buildwithcrow.com"
 
 
 def _mask(path: str, share: bool) -> str:

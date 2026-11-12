@@ -1,12 +1,13 @@
 """TokenBurn CLI entry point."""
 
+import os
 import sys
 from pathlib import Path
 
 import click
 
 from .reader import ParseError, find_sessions, parse_jsonl
-from .analyzer import analyze
+from .analyzer import analyze as _analyze
 from .reporter import format_json, format_text
 
 _DISCLAIMER = "Not affiliated with, endorsed by, or sponsored by Anthropic. Claude® is a trademark of Anthropic."
@@ -36,8 +37,7 @@ def main() -> None:
 @click.option(
     "--no-funnel",
     is_flag=True,
-    envvar="TOKENBURN_NO_FUNNEL",
-    help="Suppress the footer line.",
+    help="Suppress the footer line (also: TOKENBURN_NO_FUNNEL=1).",
 )
 def analyze(
     session_file: Path | None,
@@ -47,6 +47,7 @@ def analyze(
     no_funnel: bool,
 ) -> None:
     """Analyze a Claude Code session for token burn."""
+    no_funnel = no_funnel or bool(os.environ.get("TOKENBURN_NO_FUNNEL"))
     if session_file is None:
         sessions = find_sessions(projects_dir)
         if not sessions:
@@ -67,7 +68,7 @@ def analyze(
         click.echo(str(exc), err=True)
         sys.exit(1)
 
-    report = analyze(records)
+    report = _analyze(records)
 
     if output_json:
         click.echo(format_json(report, str(session_file), share=share))

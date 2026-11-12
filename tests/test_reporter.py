@@ -1,12 +1,16 @@
-"""Tests for criterion 3 (cost label / token counts) and criterion 6 (share mode)."""
+"""Tests for criterion 3 (cost label / token counts), criterion 6 (share mode), and criterion 8 (funnel)."""
 
 import json
 
 import pytest
+from click.testing import CliRunner
 
 from tokenburn.reader import parse_jsonl
 from tokenburn.analyzer import analyze
 from tokenburn.reporter import format_text, format_json
+from tokenburn.cli import main
+
+_FUNNEL_URL = "buildwithcrow.com"
 
 
 def _report(fixture_path):
@@ -122,20 +126,30 @@ class TestShareMode:
         assert any("/" in p for p in paths)
 
 
-# ── Funnel line (criterion 8 baseline) ───────────────────────────────────────
+# ── Funnel line (criterion 8) ─────────────────────────────────────────────────
 
 class TestFunnelLine:
     def test_funnel_present_by_default(self, session_burn):
         out = format_text(_report(session_burn))
-        assert "tokenburn.sh" in out
+        assert _FUNNEL_URL in out
 
     def test_no_funnel_flag_removes_it(self, session_burn):
         out = format_text(_report(session_burn), no_funnel=True)
-        assert "tokenburn.sh" not in out
+        assert _FUNNEL_URL not in out
+
+    def test_no_funnel_env_var_removes_it(self, session_burn):
+        runner = CliRunner()
+        result = runner.invoke(
+            main,
+            ["analyze", str(session_burn)],
+            env={"TOKENBURN_NO_FUNNEL": "1"},
+        )
+        assert result.exit_code == 0, result.output
+        assert _FUNNEL_URL not in result.output
 
     def test_no_funnel_in_json_output(self, session_burn):
         data = json.loads(format_json(_report(session_burn)))
-        assert "tokenburn.sh" not in json.dumps(data)
+        assert _FUNNEL_URL not in json.dumps(data)
 
 
 # ── Burn section in report ────────────────────────────────────────────────────
